@@ -1,2 +1,2 @@
-# initcontainers
-Kubernetes initContainers examples and good defaults
+# Kubernetes initContainers examples and good defaults
+
