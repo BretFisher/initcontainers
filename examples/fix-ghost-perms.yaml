@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ghost
+spec:
+  selector:
+    matchLabels:
+      app: ghost
+  template:
+    metadata:
+      labels:
+        app: ghost
+    spec:
+      containers:
+      - name: ghost
+        image: ghost
+        ports:
+        - containerPort: 2368
+        volumeMounts:
+        - mountPath: /var/lib/ghost/content
+          name: ghost
+        env:
+        - name: NODE_ENV
+          value: production
+        - name: url
+          value: https://www.testghost.com
+###########################################################
+# manually fix the permissions on the ghost volume
+# fsGroup is likely a better solution to this problem
+      initContainers:
+      - name: pgsql-data-permission-fix
+        image: busybox
+        command: ["/bin/chmod","-R","777", "/data"]
+        volumeMounts:
+        - mountPath: /data
+          name: ghost
+      volumes:
+        - name: ghost
+          persistentVolumeClaim:
+            claimName: ghost
+###########################################################

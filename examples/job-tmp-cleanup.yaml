@@ -1,0 +1,53 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: content
+spec:
+  schedule: "*/60 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+################################################################
+# cleanup shared /tmp before downloading content
+          initContainers:
+            - name: content
+              image: alpine
+              command:
+                - "/bin/sh"
+                - "-c"
+                - "rm -rf /tmp/* || true"
+              volumeMounts:
+                - name: tmp
+                  mountPath: /tmp/
+################################################################
+
+          containers:
+            - name: content
+              image: alpine
+              command:
+                - /scripts/content-download.sh
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts/
+                  readOnly: true
+                - name: tmp
+                  mountPath: /tmp/
+                - name: content
+                  mountPath: /myapp/content/
+              env:
+                - name: "APP_TMP"
+                  value: "/tmp/"
+                - name: "APP_CONTENT"
+                  value: "/myapp/content/"
+          volumes:
+            - name: scripts
+              configMap:
+                name: content-download
+                defaultMode: 0755
+            - name: tmp
+              persistentVolumeClaim:
+                claimName: content-tmp
+            - name: content
+              persistentVolumeClaim:
+                claimName: content
